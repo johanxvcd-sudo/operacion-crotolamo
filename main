@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>1941: El Horizonte de Hierro - Ucronía Interactiva</title>
+    <style>
+        body { background-color: #1a1a1a; color: #e0e0e0; font-family: 'Courier New', Courier, monospace; padding: 20px; line-height: 1.6; }
+        .container { max-width: 800px; margin: auto; border: 1px solid #444; padding: 30px; background-color: #262626; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
+        h1 { color: #FFBF00; text-align: center; border-bottom: 2px solid #FFBF00; padding-bottom: 10px; }
+        .nodo-texto { margin-bottom: 30px; font-size: 1.1em; }
+        .botones { display: flex; flex-direction: column; gap: 10px; }
+        button { background-color: #444; color: white; border: 1px solid #FFBF00; padding: 15px; cursor: pointer; text-align: left; font-size: 1em; transition: 0.3s; }
+        button:hover { background-color: #FFBF00; color: black; }
+        .fuente { font-size: 0.8em; color: #888; margin-top: 20px; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>REPORTE DE INTELIGENCIA ESTRATÉGICA</h1>
+    <div id="pantalla">
+        <!-- El contenido se genera aquí con JS -->
+    </div>
+</div>
+
+<script>
+const historia = {
+    inicio: {
+        texto: "MAYO 1941. Informes del espía Richard Sorge confirman que la Wehrmacht concentra 225 divisiones en la frontera [1, 2]. Stalin duda ante el Plan de Mayo de Timoshenko y Zhúkov que propone un ataque preventivo con 152 divisiones y 4,000 aviones [3-5].",
+        opciones: [
+            { texto: "Lanzar el 'Relámpago Rojo' (Ataque Preventivo)", destino: "ataque_preventivo" },
+            { texto: "Mantener postura defensiva (Historia Real)", destino: "barbarroja_real" }
+        ]
+    },
+    ataque_preventivo: {
+        texto: "UCRO-SOVIÉTICA: El Ejército Rojo golpea primero el 12 de junio [6]. Logras sorpresa táctica, pero los tanques T-26 y BT tienen motores con solo 100 horas de vida útil [7]. La logística falla y el 50% de tus carros quedan varados por averías mecánicas [6, 7].",
+        opciones: [
+            { texto: "Priorizar captura de petróleo en Rumanía", destino: "exito_soviético" },
+            { texto: "Agotar fuerzas en una carga frontal", destino: "colapso_soviético" }
+        ]
+    },
+    barbarroja_real: {
+        texto: "HISTORIA REAL: Hitler ataca el 22 de junio [8]. La Wehrmacht avanza 400km por semana [9]. En agosto, surge el dilema: Hitler quiere el grano de Ucrania y el petróleo del Cáucaso, pero Guderian insiste en que Moscú es el centro neurálgico que partirá a la URSS en dos [10-13].",
+        opciones: [
+            { texto: "Guderian desobedece: Marchar hacia Moscú", destino: "ucro_moscu" },
+            { texto: "Girar al sur hacia Kiev (Camino Real)", destino: "kiev_real" }
+        ]
+    },
+    ucro_moscu: {
+        texto: "UCRO-ALEMANA: Guderian ignora a Hitler y llega a Moscú en septiembre, evitando el barro de la 'rasputitsa' [12, 14]. Stalin huye, pero activa el complejo 'Tankograd' en los Urales, donde miles de mujeres producen 1,000 tanques al mes para una guerra eterna [15-17].",
+        opciones: [
+            { texto: "Ver el final: El Mito de la Wehrmacht", destino: "epilogo" }
+        ]
+    },
+    kiev_real: {
+        texto: "CAMINO HISTÓRICO: Capturas 600,000 prisioneros en Kiev [18]. Pero la Operación Tifón contra Moscú empieza tarde y el termómetro baja a -45°C [19]. El combustible se congela y tus soldados no tienen ropa de invierno [19, 20].",
+        opciones: [
+            { texto: "Aplicar el 'Decreto Barbarroja' con rigor", destino: "atrocidades" },
+            { texto: "Priorizar logística sobre combate", destino: "estancamiento" }
+        ]
+    },
+    atrocidades: {
+        texto: "Dureza extrema: Sigues el Decreto Barbarroja y ejecutas a sospechosos sin juicio [21, 22]. Esto elimina la justicia militar y empuja a la población civil a unirse masivamente a los partisanos rusos [10, 23].",
+        opciones: [{ texto: "Ir al Epílogo", destino: "epilogo" }]
+    },
+    epilogo: {
+        texto: "1950. Tras la guerra, generales como Franz Halder escriben memorias para crear el 'Mito de la Wehrmacht limpia', culpando solo a Hitler del fracaso estratégico y ocultando la complicidad del ejército en crímenes de guerra [24-26].",
+        opciones: [{ texto: "Reiniciar Simulación", destino: "inicio" }]
+    },
+    exito_soviético: { texto: "Capturas Ploiesti. Alemania pierde su suministro de combustible en 1942 y su maquinaria de guerra se detiene [27, 28]. Victoria soviética anticipada.", opciones: [{ texto: "Reiniciar", destino: "inicio" }] },
+    colapso_soviético: { texto: "La Wehrmacht se reorganiza y destruye tus unidades estiradas. El contraataque nazi es imparable [6].", opciones: [{ texto: "Reiniciar", destino: "inicio" }] },
+    estancamiento: { texto: "El frente se estabiliza en el río Mius, preservando vidas alemanas pero perdiendo la iniciativa estratégica [29].", opciones: [{ texto: "Reiniciar", destino: "inicio" }] }
+};
+
+function renderizar(nodoId) {
+    const nodo = historia[nodoId];
+    const pantalla = document.getElementById('pantalla');
+    let html = `<div class="nodo-texto">${nodo.texto}</div><div class="botones">`;
+    
+    nodo.opciones.forEach(opt => {
+        html += `<button onclick="renderizar('${opt.destino}')">${opt.texto}</button>`;
+    });
+    
+    html += `</div>`;
+    pantalla.innerHTML = html;
+}
+
+// Iniciar la narrativa
+renderizar('inicio');
+</script>
+
+</body>
+</html>
