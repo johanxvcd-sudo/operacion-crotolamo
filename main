@@ -2,92 +2,146 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>1941: El Horizonte de Hierro - Ucronía Interactiva</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1941: El Horizonte de Hierro</title>
     <style>
-        body { background-color: #1a1a1a; color: #e0e0e0; font-family: 'Courier New', Courier, monospace; padding: 20px; line-height: 1.6; }
-        .container { max-width: 800px; margin: auto; border: 1px solid #444; padding: 30px; background-color: #262626; box-shadow: 0 0 15px rgba(0,0,0,0.5); }
-        h1 { color: #FFBF00; text-align: center; border-bottom: 2px solid #FFBF00; padding-bottom: 10px; }
-        .nodo-texto { margin-bottom: 30px; font-size: 1.1em; }
-        .botones { display: flex; flex-direction: column; gap: 10px; }
-        button { background-color: #444; color: white; border: 1px solid #FFBF00; padding: 15px; cursor: pointer; text-align: left; font-size: 1em; transition: 0.3s; }
-        button:hover { background-color: #FFBF00; color: black; }
-        .fuente { font-size: 0.8em; color: #888; margin-top: 20px; font-style: italic; }
+        :root { --accent: #FFBF00; --soviet: #8B0000; --nazi: #4F4F4F; --bg: #1a1a1a; }
+        body { background-color: var(--bg); color: #e0e0e0; font-family: 'Courier New', Courier, monospace; padding: 20px; display: flex; justify-content: center; }
+        .container { max-width: 850px; background: #262626; border: 2px solid #444; padding: 30px; box-shadow: 0 0 20px rgba(0,0,0,0.7); }
+        h1 { color: var(--accent); text-align: center; border-bottom: 2px solid var(--accent); text-transform: uppercase; letter-spacing: 2px; }
+        
+        /* Dashboard de Recursos */
+        #inventory { 
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            background: #111; padding: 15px; border: 1px solid var(--soviet); margin-bottom: 25px;
+        }
+        .stat { text-align: center; font-weight: bold; font-size: 0.85em; }
+        .val { color: #f00; font-size: 1.2em; display: block; }
+
+        /* Narrativa y Hans */
+        .story-box { font-size: 1.1em; line-height: 1.6; margin-bottom: 30px; min-height: 150px; }
+        .diary-entry { 
+            background: #333; padding: 15px; border-left: 4px solid var(--accent); 
+            font-style: italic; font-size: 0.95em; color: #bbb; margin-top: 20px;
+        }
+
+        /* Botones de Decisión */
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
+        button { 
+            background: transparent; color: white; border: 1px solid var(--accent);
+            padding: 15px; cursor: pointer; text-align: left; transition: 0.3s; font-family: inherit;
+        }
+        button:hover:not([disabled]) { background: var(--accent); color: black; font-weight: bold; }
+        button:disabled { border-color: #555; color: #777; cursor: not-allowed; }
+        
+        .label { color: var(--accent); font-weight: bold; margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>REPORTE DE INTELIGENCIA ESTRATÉGICA</h1>
-    <div id="pantalla">
-        <!-- El contenido se genera aquí con JS -->
+    <h1>Expediente: Operación Barbarroja</h1>
+    
+    <div id="inventory">
+        <div class="stat">MUNICIÓN AP (Perforante)<span id="ap" class="val">0</span></div>
+        <div class="stat">MUNICIÓN HE (Explosiva)<span id="he" class="val">0</span></div>
+        <div class="stat">VIDA MOTOR (Límite 100h)<span id="motor" class="val">0</span>h</div>
+    </div>
+
+    <div id="game">
+        <div id="text" class="story-box"></div>
+        <div id="diary" class="diary-entry" style="display:none;"></div>
+        <div id="choices" class="btn-group"></div>
     </div>
 </div>
 
 <script>
-const historia = {
+// Estado inicial basado en fuentes técnicas
+let state = { ap: 4, he: 11, motor: 100 }; // 15% de munición real [1, 2]
+
+const nodes = {
     inicio: {
-        texto: "MAYO 1941. Informes del espía Richard Sorge confirman que la Wehrmacht concentra 225 divisiones en la frontera [1, 2]. Stalin duda ante el Plan de Mayo de Timoshenko y Zhúkov que propone un ataque preventivo con 152 divisiones y 4,000 aviones [3-5].",
-        opciones: [
-            { texto: "Lanzar el 'Relámpago Rojo' (Ataque Preventivo)", destino: "ataque_preventivo" },
-            { texto: "Mantener postura defensiva (Historia Real)", destino: "barbarroja_real" }
+        text: "MAYO 1941. Inteligencia confirma el despliegue alemán. El Plan de Mayo de Timoshenko y Zhúkov propone un ataque preventivo inmediato con 152 divisiones [5, 6].",
+        diary: "Hans (22 de junio): 'Marchamos hacia el este. El polvo se vuelve óxido en mi boca... tragamos Rusia con cada aliento' [7].",
+        options: [
+            { text: "Lanzar 'Relámpago Rojo' (Ucronía Soviética)", next: "soviet_attack" },
+            { text: "Mantener defensa (Historia Real)", next: "barbarossa_real" }
         ]
     },
-    ataque_preventivo: {
-        texto: "UCRO-SOVIÉTICA: El Ejército Rojo golpea primero el 12 de junio [6]. Logras sorpresa táctica, pero los tanques T-26 y BT tienen motores con solo 100 horas de vida útil [7]. La logística falla y el 50% de tus carros quedan varados por averías mecánicas [6, 7].",
-        opciones: [
-            { texto: "Priorizar captura de petróleo en Rumanía", destino: "exito_soviético" },
-            { texto: "Agotar fuerzas en una carga frontal", destino: "colapso_soviético" }
+    soviet_attack: {
+        text: "GOLPE PREVENTIVO. Logras sorpresa, pero la logística es un caos. El 50% de tus tanques fallan mecánicamente antes de ver al enemigo [1, 2].",
+        options: [
+            { text: "Capturar petróleo en Rumanía (-40h motor)", next: "victory_oil", costM: 40 },
+            { text: "Agotar fuerzas en choque frontal", next: "failure_attrition" }
         ]
     },
-    barbarroja_real: {
-        texto: "HISTORIA REAL: Hitler ataca el 22 de junio [8]. La Wehrmacht avanza 400km por semana [9]. En agosto, surge el dilema: Hitler quiere el grano de Ucrania y el petróleo del Cáucaso, pero Guderian insiste en que Moscú es el centro neurálgico que partirá a la URSS en dos [10-13].",
-        opciones: [
-            { texto: "Guderian desobedece: Marchar hacia Moscú", destino: "ucro_moscu" },
-            { texto: "Girar al sur hacia Kiev (Camino Real)", destino: "kiev_real" }
+    barbarossa_real: {
+        text: "AGOSTO 1941. La Wehrmacht avanza 400km/semana. Hitler exige Ucrania, pero Guderian insiste en Moscú para partir la URSS en dos [8, 9].",
+        diary: "Hans (3 de julio): 'Carl cayó... su sangre se secó en mis manos. Ya no sé si está vivo' [10, 11].",
+        options: [
+            { text: "Prioridad Moscú (Ucronía Alemana)", next: "moscow_path" },
+            { text: "Prioridad Kiev (Camino Real)", next: "kiev_path" }
         ]
     },
-    ucro_moscu: {
-        texto: "UCRO-ALEMANA: Guderian ignora a Hitler y llega a Moscú en septiembre, evitando el barro de la 'rasputitsa' [12, 14]. Stalin huye, pero activa el complejo 'Tankograd' en los Urales, donde miles de mujeres producen 1,000 tanques al mes para una guerra eterna [15-17].",
-        opciones: [
-            { texto: "Ver el final: El Mito de la Wehrmacht", destino: "epilogo" }
+    moscow_path: {
+        text: "MOSCÚ CAE en septiembre. Stalin activa 'Tankograd' en los Urales: 1,000 tanques/mes fabricados por mujeres en naves bajo lonas a -40°C [12, 13].",
+        options: [{ text: "Ver el final de la historia", next: "myth" }]
+    },
+    kiev_path: {
+        text: "VICTORIA EN KIEV (600,000 prisioneros). Pero el frío llega a -45°C. El combustible se hiela y no hay ropa de invierno [14, 15].",
+        diary: "Hans (12 de agosto): 'Vimos el infierno... un barranco lleno de civiles ejecutados. Estoy avergonzado de usar este uniforme' [16, 17].",
+        options: [
+            { text: "Aplicar 'Decreto Barbarroja' (Rigor)", next: "partisan_war" },
+            { text: "Priorizar logística invernal", next: "stalling" }
         ]
     },
-    kiev_real: {
-        texto: "CAMINO HISTÓRICO: Capturas 600,000 prisioneros en Kiev [18]. Pero la Operación Tifón contra Moscú empieza tarde y el termómetro baja a -45°C [19]. El combustible se congela y tus soldados no tienen ropa de invierno [19, 20].",
-        opciones: [
-            { texto: "Aplicar el 'Decreto Barbarroja' con rigor", destino: "atrocidades" },
-            { texto: "Priorizar logística sobre combate", destino: "estancamiento" }
-        ]
+    partisan_war: {
+        text: "GUERRA DE EXTERMINIO. Las órdenes criminales de Keitel eliminan la justicia militar. La población se une masivamente a los partisanos [18, 19].",
+        options: [{ text: "Acceder al archivo histórico", next: "myth" }]
     },
-    atrocidades: {
-        texto: "Dureza extrema: Sigues el Decreto Barbarroja y ejecutas a sospechosos sin juicio [21, 22]. Esto elimina la justicia militar y empuja a la población civil a unirse masivamente a los partisanos rusos [10, 23].",
-        opciones: [{ texto: "Ir al Epílogo", destino: "epilogo" }]
+    myth: {
+        text: "1950. Los generales supervivientes crean el 'Mito de la Wehrmacht limpia', culpando solo a Hitler para facilitar el rearme en la Guerra Fría [4, 20].",
+        options: [{ text: "Reiniciar Simulación", next: "inicio", reset: true }]
     },
-    epilogo: {
-        texto: "1950. Tras la guerra, generales como Franz Halder escriben memorias para crear el 'Mito de la Wehrmacht limpia', culpando solo a Hitler del fracaso estratégico y ocultando la complicidad del ejército en crímenes de guerra [24-26].",
-        opciones: [{ texto: "Reiniciar Simulación", destino: "inicio" }]
-    },
-    exito_soviético: { texto: "Capturas Ploiesti. Alemania pierde su suministro de combustible en 1942 y su maquinaria de guerra se detiene [27, 28]. Victoria soviética anticipada.", opciones: [{ texto: "Reiniciar", destino: "inicio" }] },
-    colapso_soviético: { texto: "La Wehrmacht se reorganiza y destruye tus unidades estiradas. El contraataque nazi es imparable [6].", opciones: [{ texto: "Reiniciar", destino: "inicio" }] },
-    estancamiento: { texto: "El frente se estabiliza en el río Mius, preservando vidas alemanas pero perdiendo la iniciativa estratégica [29].", opciones: [{ texto: "Reiniciar", destino: "inicio" }] }
+    victory_oil: { text: "Capturas Ploiesti. Alemania colapsa sin combustible en 1942.", options: [{ text: "Reiniciar", next: "inicio", reset: true }] },
+    failure_attrition: { text: "Colapso mecánico total. La Wehrmacht te aniquila.", options: [{ text: "Reiniciar", next: "inicio", reset: true }] },
+    stalling: { text: "Frente estabilizado en el río Mius. Preparación para 1942.", options: [{ text: "Reiniciar", next: "inicio", reset: true }] }
 };
 
-function renderizar(nodoId) {
-    const nodo = historia[nodoId];
-    const pantalla = document.getElementById('pantalla');
-    let html = `<div class="nodo-texto">${nodo.texto}</div><div class="botones">`;
-    
-    nodo.opciones.forEach(opt => {
-        html += `<button onclick="renderizar('${opt.destino}')">${opt.texto}</button>`;
-    });
-    
-    html += `</div>`;
-    pantalla.innerHTML = html;
+function updateUI() {
+    document.getElementById('ap').innerText = state.ap;
+    document.getElementById('he').innerText = state.he;
+    document.getElementById('motor').innerText = state.motor;
 }
 
-// Iniciar la narrativa
-renderizar('inicio');
-</script>
+function render(nodeId) {
+    const node = nodes[nodeId];
+    if (node.reset) { state = { ap: 4, he: 11, motor: 100 }; }
+    
+    updateUI();
+    document.getElementById('text').innerHTML = node.text;
+    
+    const diaryEl = document.getElementById('diary');
+    if (node.diary) { diaryEl.innerHTML = node.diary; diaryEl.style.display = 'block'; }
+    else { diaryEl.style.display = 'none'; }
 
+    const choicesEl = document.getElementById('choices');
+    choicesEl.innerHTML = '<span class="label">TRANSICIÓN OPERACIONAL:</span>';
+    
+    node.options.forEach(opt => {
+        const canPay = (opt.costM || 0) <= state.motor;
+        const btn = document.createElement('button');
+        btn.innerHTML = opt.text + (canPay ? "" : " (Fallo Mecánico)");
+        btn.disabled = !canPay;
+        btn.onclick = () => {
+            state.motor -= (opt.costM || 0);
+            render(opt.next);
+        };
+        choicesEl.appendChild(btn);
+    });
+}
+
+render('inicio');
+</script>
 </body>
 </html>
